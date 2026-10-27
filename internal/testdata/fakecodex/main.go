@@ -76,7 +76,9 @@ func writeFinal(path, text string) {
 	if path == "" {
 		return
 	}
-	if err := os.WriteFile(path, []byte(text), 0600); err != nil {
+	// Match Codex's behavior: the -o file is created with the process umask,
+	// not 0600. ExecRunner is responsible for tightening the mode.
+	if err := os.WriteFile(path, []byte(text), 0666); err != nil {
 		fmt.Fprintln(os.Stderr, "fakecodex: write final:", err)
 		os.Exit(1)
 	}

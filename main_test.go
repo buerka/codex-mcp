@@ -47,9 +47,16 @@ func TestMain(m *testing.M) {
 
 func testServer(t *testing.T, allowFullAccess bool) *mcp.ClientSession {
 	t.Helper()
+	cs, _ := testServerWithJobsDir(t, allowFullAccess)
+	return cs
+}
+
+func testServerWithJobsDir(t *testing.T, allowFullAccess bool) (*mcp.ClientSession, string) {
+	t.Helper()
 	cfg := config.Default()
 	cfg.CodexBin = fakeCodex
-	cfg.JobsDir = t.TempDir()
+	jobsDir := t.TempDir()
+	cfg.JobsDir = jobsDir
 	cfg.Timeout = 30 * time.Second
 	cfg.MaxConcurrency = 1
 	cfg.QueueLimit = 4
@@ -79,7 +86,7 @@ func testServer(t *testing.T, allowFullAccess bool) *mcp.ClientSession {
 		t.Fatalf("client connect: %v", err)
 	}
 	t.Cleanup(func() { cs.Close() })
-	return cs
+	return cs, jobsDir
 }
 
 func callTool(t *testing.T, cs *mcp.ClientSession, name string, args map[string]any) (*mcp.CallToolResult, error) {
@@ -199,6 +206,27 @@ func TestRunAndResult(t *testing.T) {
 	}
 	if filtered := callText(t, cs, "codex_list", map[string]any{"state": "failed"}); filtered != "(no jobs)" {
 		t.Fatalf("failed filter = %q", filtered)
+	}
+}
+
+func TestFinalFileMode(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix file modes are not meaningful on windows")
+	}
+	t.Setenv("FAKE_CODEX_SCENARIO", "success")
+	cs, jobsDir := testServerWithJobsDir(t, false)
+	run := callText(t, cs, "codex_run", map[string]any{
+		"prompt": "mode", "cwd": t.TempDir(), "sandbox": "read-only",
+	})
+	id := jobID(t, run)
+	callText(t, cs, "codex_result", map[string]any{"job": id, "wait_sec": 10})
+
+	info, err := os.Stat(filepath.Join(jobsDir, id, "final.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := info.Mode().Perm(); perm != 0600 {
+		t.Fatalf("final.txt mode = %o, want 600", perm)
 	}
 }
 

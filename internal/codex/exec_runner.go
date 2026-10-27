@@ -117,6 +117,11 @@ func (r *ExecRunner) Run(ctx context.Context, spec RunSpec, hooks Hooks) (RunRes
 			return res, fmt.Errorf("write fallback final message: %w", err)
 		}
 	}
+	// Codex creates the -o file with the process umask, so enforce the job
+	// directory's 0600 contract after every run.
+	if fileSize(spec.FinalPath) > 0 {
+		_ = os.Chmod(spec.FinalPath, 0600)
+	}
 	if res.ExitCode == 0 && fileSize(spec.FinalPath) == 0 {
 		return res, fmt.Errorf("codex exited 0 without a final message")
 	}
