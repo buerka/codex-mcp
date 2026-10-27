@@ -95,6 +95,9 @@ func TestSubmitAndSucceed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if snap.ID != "cx-1" {
+		t.Fatalf("first job id = %q, want cx-1", snap.ID)
+	}
 	if snap.State != Queued {
 		t.Fatalf("state = %s", snap.State)
 	}
@@ -111,6 +114,46 @@ func TestSubmitAndSucceed(t *testing.T) {
 	b, err := os.ReadFile(done.Paths.Final)
 	if err != nil || string(b) != "final answer" {
 		t.Fatalf("final = %q, %v", b, err)
+	}
+}
+
+func TestIDsContinueAfterRestart(t *testing.T) {
+	cfg := config.Default()
+	cfg.JobsDir = t.TempDir()
+	cfg.MaxConcurrency = 1
+	cfg.QueueLimit = 4
+	dir := t.TempDir()
+
+	first, err := New(cfg, &fakeRunner{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snap, err := first.Submit(Request{Prompt: "one", Cwd: dir, Sandbox: "workspace-write", Timeout: time.Minute})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := first.Wait(context.Background(), snap.ID, 2*time.Second); !ok {
+		t.Fatal("first job disappeared")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	first.Shutdown(ctx)
+	cancel()
+
+	second, err := New(cfg, &fakeRunner{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		second.Shutdown(ctx)
+	})
+	next, err := second.Submit(Request{Prompt: "two", Cwd: dir, Sandbox: "workspace-write", Timeout: time.Minute})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if next.ID != "cx-2" {
+		t.Fatalf("id after restart = %q, want cx-2", next.ID)
 	}
 }
 

@@ -121,8 +121,8 @@ func (m *Manager) Submit(req Request) (Snapshot, error) {
 		return Snapshot{}, fmt.Errorf("job queue is full (%d); wait for or cancel a job", m.cfg.QueueLimit)
 	}
 
-	m.next++
 	id := fmt.Sprintf("cx-%d", m.next)
+	m.next++
 	paths := jobPaths(m.cfg.JobsDir, id)
 	if err := os.MkdirAll(paths.Dir, 0700); err != nil {
 		return Snapshot{}, fmt.Errorf("create job directory: %w", err)
