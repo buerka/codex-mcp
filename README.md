@@ -241,9 +241,13 @@ Directories are created `0700`, files `0600`. Only the newest
 restart, old directories may still exist, but they are not addressable by
 `codex_result` or `codex_output`.
 
-Every returned body passes a redaction filter for private key blocks, `sk-…`
-API keys, `Bearer …` tokens and `OPENAI_API_KEY=…`. This is a backstop, not a
-reason to put secrets in prompts.
+Prompts are not written to the job directory. Codex's own session store is
+controlled by `CODEX_HOME` and `--ephemeral`; use `ephemeral:true` when a prompt
+must not be recorded there.
+
+Every tool response and tool error passes a redaction filter for private key
+blocks, `sk-…` API keys, `Bearer …` tokens and `OPENAI_API_KEY=…`. This is a
+backstop, not a reason to put secrets in prompts.
 
 ## Security and terms 安全与使用条款
 

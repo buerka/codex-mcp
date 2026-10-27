@@ -29,13 +29,14 @@ func newApp(cfg config.Config, mgr *jobs.Manager, pol *policy.Policy) *App {
 	return &App{cfg: cfg, mgr: mgr, policy: pol}
 }
 
-// Text wraps a plain-text payload as the only tool content.
+// Text wraps a plain-text payload as the only tool content. Every response
+// passes the redaction filter here as a final backstop.
 func Text(s string) (*mcp.CallToolResult, any, error) {
-	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: s}}}, nil, nil
+	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: output.Redact(s)}}}, nil, nil
 }
 
 func ToolError(err error) (*mcp.CallToolResult, any, error) {
-	return nil, nil, err
+	return nil, nil, fmt.Errorf("%s", output.Redact(err.Error()))
 }
 
 // RunIn starts a new Codex run or resumes an existing thread.
