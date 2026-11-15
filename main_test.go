@@ -170,6 +170,19 @@ func TestListTools(t *testing.T) {
 	}
 }
 
+func TestInitializeInstructions(t *testing.T) {
+	cs := testServer(t, false)
+	init := cs.InitializeResult()
+	if init == nil || init.Instructions == "" {
+		t.Fatal("InitializeResult.instructions is empty; agents get no usage guidance at handshake")
+	}
+	for _, want := range []string{"codex_run", "codex_result", "read-only"} {
+		if !strings.Contains(init.Instructions, want) {
+			t.Fatalf("instructions missing %q:\n%s", want, init.Instructions)
+		}
+	}
+}
+
 func TestRunAndResult(t *testing.T) {
 	t.Setenv("FAKE_CODEX_SCENARIO", "success")
 	cs := testServer(t, false)

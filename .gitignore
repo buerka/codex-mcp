@@ -1,5 +1,14 @@
 /codex-mcp
+/codex-mcp.exe
 /dist/
 *.test
 *.out
 .DS_Store
+
+# ZCode workspace-local files (plans, caches); share only what you intend to
+.zcode/
+
+# editors
+*.swp
+.idea/
+.vscode/

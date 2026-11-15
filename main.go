@@ -86,7 +86,9 @@ func fatal(err error) {
 // newServer registers all six tools. Split out of main so tests can drive the
 // server over an in-memory transport.
 func newServer(app *App) *mcp.Server {
-	server := mcp.NewServer(&mcp.Implementation{Name: "codex-mcp", Version: version}, nil)
+	server := mcp.NewServer(&mcp.Implementation{Name: "codex-mcp", Version: version}, &mcp.ServerOptions{
+		Instructions: "Delegate coding tasks to Codex with these tools instead of shelling out to `codex exec` in Bash. Typical flow: codex_run starts a job and returns its id immediately, then codex_result(wait_sec) returns the final answer — long answers continue with the offset it prints, never cut mid-reply. Use codex_status for one-line progress, codex_output for raw final/events/stderr pages, codex_cancel to stop a job, codex_list to see recent jobs. Jobs survive tool-call timeouts; start with sandbox:\"read-only\" when you only need analysis.",
+	})
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "codex_run",

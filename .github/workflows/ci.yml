@@ -25,6 +25,9 @@ jobs:
       - name: build
         run: go build -o /tmp/codex-mcp .
 
+      - name: Vulnerability scan
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
   build-windows:
     runs-on: windows-latest
     steps:

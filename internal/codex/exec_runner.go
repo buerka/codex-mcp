@@ -60,7 +60,7 @@ func (r *ExecRunner) Run(ctx context.Context, spec RunSpec, hooks Hooks) (RunRes
 		stdoutR.Close()
 		stderrFile.Close()
 		eventsFile.Close()
-		return res, fmt.Errorf("start codex: %w", err)
+		return res, fmt.Errorf("start codex (bin: %s): %w", r.Bin, err)
 	}
 	if hooks.OnStart != nil {
 		hooks.OnStart(p)
